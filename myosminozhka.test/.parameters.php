@@ -13,29 +13,44 @@ try
 {
     $rsLangs = CLanguage::GetList($by='lid', $order='desc');
     $arLangs = [];
+    $additionalLangParams = [];
+    $arFirstLang = [];
+    $i = 0;
     while ($arLang = $rsLangs->Fetch())
     {
-        $arLangs[$arLang['LID']] = $arLang['NAME'];
-        if ($arCurrentValues['LANG_ID'] == $arLang['LID']) {
-            $additionalLangParams['PERCENTS_FOR_AUTHORIZED_USERS_' . ToUpper($arLang['LID'])] = 
-            [
-                'PARENT' => 'BASE',
-                'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_AUTHORIZED_USERS', ['LANG' => $arLang['NAME']]),
-                'TYPE' => 'STRING',
-                'MULTIPLE' => 'Y',
-                'DEFAULT' => ''
-            ];
-            $additionalLangParams['PERCENTS_FOR_UNAUTHORIZED_USERS_' . ToUpper($arLang['LID'])] =
-            [
-                'PARENT' => 'BASE',
-                'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_UNAUTHORIZED_USERS', ['LANG' => $arLang['NAME']]),
-                'TYPE' => 'STRING',
-                'MULTIPLE' => 'Y',
-                'DEFAULT' => ''
-            ];
+        if($i == 0)
+        {
+            $arFirstLang = $arLang;
         }
+        $arLangs[$arLang['LID']] = $arLang['NAME'];
+        $i++;
     }
-
+    
+    $lid = $arCurrentValues['LANG_ID'];
+    $nameLang = $arLangs[$arCurrentValues['LANG_ID']];
+    if (empty($lid))
+    {
+        $lid = $arFirstLang['LID'];
+        $nameLang = $arFirstLang['NAME'];
+    }
+    
+    $additionalLangParams['PERCENTS_FOR_AUTHORIZED_USERS_' . ToUpper($lid)] = 
+    [
+        'PARENT' => 'BASE',
+        'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_AUTHORIZED_USERS', ['LANG' => $nameLang]),
+        'TYPE' => 'STRING',
+        'MULTIPLE' => 'Y',
+        'DEFAULT' => ''
+    ];
+    $additionalLangParams['PERCENTS_FOR_UNAUTHORIZED_USERS_' . ToUpper($lid)] =
+    [
+        'PARENT' => 'BASE',
+        'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_UNAUTHORIZED_USERS', ['LANG' => $nameLang]),
+        'TYPE' => 'STRING',
+        'MULTIPLE' => 'Y',
+        'DEFAULT' => ''
+    ];
+    
 	$arComponentParameters = array(
 		'GROUPS' => array(
 		),
@@ -51,7 +66,13 @@ try
             'CACHE_TIME'  => ['DEFAULT'=>86400]
         )
     );
-    $arComponentParameters['PARAMETERS'] = array_merge($arComponentParameters['PARAMETERS'], $additionalLangParams);
+    if ($additionalLangParams)
+    {
+        foreach($additionalLangParams as $code => $additionalLangParam)
+        {
+            $arComponentParameters['PARAMETERS'][$code] = $additionalLangParam;
+        }
+    }
 }
 catch (Main\LoaderException $e)
 {
