@@ -36,8 +36,13 @@ class MyosminozhkaTestComponent extends \CBitrixComponent
     
     private function readXMLCbr()
     {
+        $isAuthorized = 'N';
+        if (CUser::IsAuthorized())
+        {
+            $isAuthorized = 'Y';
+        }
         $cache = Cache::createInstance();
-        if ($cache->initCache($this->arParams['CACHE_TIME'], 'currencies'))
+        if ($cache->initCache($this->arParams['CACHE_TIME'], 'currencies'.$isAuthorized.LANGUAGE_ID))
         {
             $vars = $cache->getVars();
             $this->arResult = $vars;
@@ -64,7 +69,7 @@ class MyosminozhkaTestComponent extends \CBitrixComponent
                 $result[$currency] = $arCurrencyValues[$currency];
             }
             $this->arResult = $result;
-            $cache->endDataCache();
+            $cache->endDataCache($result);
         }
     }
     
