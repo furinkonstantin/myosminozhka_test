@@ -4,52 +4,38 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arCurrentValues */
 
 use Bitrix\Main,
-    Bitrix\Main\Localization\Loc as Loc,
-    Bitrix\Main\Config\Option;
+    Bitrix\Main\Localization\Loc as Loc;
 
 Loc::loadMessages(__FILE__);
 
 try
 {
     $rsLangs = CLanguage::GetList($by='lid', $order='desc');
-    $arLangs = [];
+    $arLangs = ['' => Loc::getMessage('MYOSMINOZHKA_CHOOSE_LANG')];
     $additionalLangParams = [];
-    $arFirstLang = [];
-    $i = 0;
     while ($arLang = $rsLangs->Fetch())
     {
-        if($i == 0)
-        {
-            $arFirstLang = $arLang;
-        }
         $arLangs[$arLang['LID']] = $arLang['NAME'];
-        $i++;
+        if ($arCurrentValues['LANG_ID'] == $arLang['LID'])
+        {
+            $additionalLangParams['PERCENTS_FOR_AUTHORIZED_USERS_' . ToUpper($arLang['LID'])] = 
+            [
+                'PARENT' => 'BASE',
+                'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_AUTHORIZED_USERS', ['LANG' => $arLang['NAME']]),
+                'TYPE' => 'STRING',
+                'MULTIPLE' => 'Y',
+                'DEFAULT' => ''
+            ];
+            $additionalLangParams['PERCENTS_FOR_UNAUTHORIZED_USERS_' . ToUpper($arLang['LID'])] =
+            [
+                'PARENT' => 'BASE',
+                'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_UNAUTHORIZED_USERS', ['LANG' => $arLang['NAME']]),
+                'TYPE' => 'STRING',
+                'MULTIPLE' => 'Y',
+                'DEFAULT' => ''
+            ];
+        }
     }
-    
-    $lid = $arCurrentValues['LANG_ID'];
-    $nameLang = $arLangs[$arCurrentValues['LANG_ID']];
-    if (empty($lid))
-    {
-        $lid = $arFirstLang['LID'];
-        $nameLang = $arFirstLang['NAME'];
-    }
-    
-    $additionalLangParams['PERCENTS_FOR_AUTHORIZED_USERS_' . ToUpper($lid)] = 
-    [
-        'PARENT' => 'BASE',
-        'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_AUTHORIZED_USERS', ['LANG' => $nameLang]),
-        'TYPE' => 'STRING',
-        'MULTIPLE' => 'Y',
-        'DEFAULT' => ''
-    ];
-    $additionalLangParams['PERCENTS_FOR_UNAUTHORIZED_USERS_' . ToUpper($lid)] =
-    [
-        'PARENT' => 'BASE',
-        'NAME' => Loc::getMessage('MYOSMINOZHKA_PERCENTS_FOR_UNAUTHORIZED_USERS', ['LANG' => $nameLang]),
-        'TYPE' => 'STRING',
-        'MULTIPLE' => 'Y',
-        'DEFAULT' => ''
-    ];
     
 	$arComponentParameters = array(
 		'GROUPS' => array(
@@ -68,10 +54,7 @@ try
     );
     if ($additionalLangParams)
     {
-        foreach($additionalLangParams as $code => $additionalLangParam)
-        {
-            $arComponentParameters['PARAMETERS'][$code] = $additionalLangParam;
-        }
+        $arComponentParameters['PARAMETERS'] = array_merge($arComponentParameters['PARAMETERS'], $additionalLangParams);
     }
 }
 catch (Main\LoaderException $e)
