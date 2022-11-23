@@ -9,7 +9,7 @@ use Bitrix\Main,
 Loc::loadMessages(__FILE__);
 
 try
-{
+{ 
     $rsLangs = CLanguage::GetList($by='lid', $order='desc');
     $arLangs = ['' => Loc::getMessage('MYOSMINOZHKA_CHOOSE_LANG')];
     $additionalLangParams = [];
